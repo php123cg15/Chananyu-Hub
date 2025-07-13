@@ -68,15 +68,13 @@ MainTab:CreateToggle({
    end
 })
 
-local isInvisible = false
 MainTab:CreateToggle({
-   Name = "ล่องหน (Invisible)",
+   Name = "ล่องหน (เฉพาะตัว ไม่ลบชื่อ)",
    CurrentValue = false,
    Callback = function(Value)
-      isInvisible = Value
       for _,v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
          if v:IsA("BasePart") or v:IsA("Decal") then
-            v.Transparency = isInvisible and 1 or 0
+            v.Transparency = Value and 1 or 0
          end
       end
    end
@@ -152,5 +150,37 @@ MainTab:CreateButton({
    Name = "วาร์ปไป (0,50,0)",
    Callback = function()
       game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(0,50,0))
+   end
+})
+
+MainTab:CreateInput({
+   Name = "แปลงร่างเป็นผู้เล่น (ให้คนอื่นเห็น)",
+   PlaceholderText = "พิมพ์ชื่อที่นี่",
+   RemoveTextAfterFocusLost = true,
+   Callback = function(Text)
+      local target = game.Players:FindFirstChild(Text)
+      local player = game.Players.LocalPlayer
+      if target and target.Character and player.Character then
+         local desc = target.Character.Humanoid:GetAppliedDescription()
+         
+         -- ฝั่ง Client
+         player.Character.Humanoid:ApplyDescription(desc)
+
+         -- พยายามส่งไป Server
+         local remote = nil
+         for _,v in pairs(game:GetDescendants()) do
+            if v:IsA("RemoteEvent") and v.Name:lower():find("apply") then
+               remote = v
+               break
+            end
+         end
+         if remote then
+            remote:FireServer(desc)
+         else
+            warn("ไม่พบ RemoteEvent สำหรับส่งเซิร์ฟเวอร์")
+         end
+      else
+         warn("ไม่พบผู้เล่นชื่อ: "..Text)
+      end
    end
 })
